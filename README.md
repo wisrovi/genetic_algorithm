@@ -11,3 +11,76 @@ The genetic algorithm analyzes the patterns of changes between these selected in
 This process of selecting, creating new generations, and evaluating is repeated in a loop until the user-defined number of generations is reached. It is important to note that a new generation is not generated until all individuals in the current population are evaluated.
 
 In each generation, the best individual is saved in a CSV file, thus allowing its recovery at moments after the execution of the algorithm. At the end of the evaluation of all the individuals of the last generation, the best individual is selected as the final result of the genetic algorithm.
+
+# example
+
+## 1. create parameters to optimize and create the parameters of the genetic algorithm
+
+Create a dictionary:
+
+```python
+base_optimize = dict(
+        conf=float,
+        buffer=int,
+        optimized=bool,
+    )
+```
+
+With all this defined, the parameters are initialized
+
+```python
+ga_params = GAParams(
+        population_size=50,
+        evolution_generations=100,
+        params_to_optimize=base_optimize,
+    )
+```
+
+## 2. connect the main process and create an evaluation function
+
+create a dictionary usage function in your own function, this function invokes a main process (for example: predict using a neural network)
+
+```python
+def process_individual(ind: dict) -> float:
+        """
+        This function is used to process the individual and return a value to be optimized.
+
+        @param ind: The individual to be processed.
+        @return: A value to be optimized.
+        """
+        values = [float(v) for v in ind.values()]
+        return sum(values)
+```
+
+create an evaluation function, this function takes the value of the main process, does some calculations and finds the scoring, it is important to clarify that it must return a tuple of a single value
+
+```python
+def evaluate(ind: dict) -> tuple:
+        """
+        This function is used to evaluate the individual and return a tuple with the fitness value.
+
+        @param ind: The individual to be evaluated.
+        @return: A tuple with the fitness value.
+        """
+        data = process_individual(ind)
+        difference = abs(100 - data)
+        percentage_closeness = max(0, 1 - (difference / 100))
+        return (int(percentage_closeness * 100),)
+```
+
+## 3. Create the genetic algorithm and evolve it with the parameterized configurations
+
+These parameters are then given to the genetic algorithm to construct the class, the evaluation function is also delivered
+
+```python
+ga_instance = GA(ga_params, evaluate)
+```
+
+Evolve the population
+
+```python
+best_individual = ga_instance.evolve_population()
+
+# Print the best individual, this will be the individual with the highest fitness value.
+    print("Best Individual:", best_individual)
+```
